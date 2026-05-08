@@ -19,6 +19,7 @@ import PMOC from "@/pages/PMOC";
 import OEE from "@/pages/OEE";
 import MapaSituacional from "@/pages/MapaSituacional";
 import EquipamentoPublico from "@/pages/EquipamentoPublico";
+import EquipamentoHistorico from "@/pages/EquipamentoHistorico";
 
 const queryClient = new QueryClient();
 
@@ -29,14 +30,12 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
-            {/* Rotas públicas */}
             <Route path="/login" element={<Login />} />
             <Route path="/eq/:id" element={<EquipamentoPublico />} />
-
-            {/* Rotas protegidas */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Dashboard />} />
               <Route path="/equipamentos" element={<Equipamentos />} />
+              <Route path="/equipamentos/:id/historico" element={<EquipamentoHistorico />} />
               <Route path="/ordens" element={<OrdensServico />} />
               <Route path="/preventivas" element={<Preventivas />} />
               <Route path="/estoque" element={<Estoque />} />
