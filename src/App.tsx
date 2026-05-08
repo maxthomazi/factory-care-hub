@@ -10,6 +10,9 @@ import NotFound from "@/pages/NotFound";
 import Especialidades from "@/pages/Especialidades";
 import Funcionarios from "@/pages/Funcionarios";
 import Estoque from "@/pages/Estoque";
+import Equipamentos from "@/pages/Equipamentos";
+import Preventivas from "@/pages/Preventivas";
+import OrdensServico from "@/pages/OrdensServico";
 
 const queryClient = new QueryClient();
 
@@ -23,9 +26,12 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
               <Route path="/" element={<Dashboard />} />
-              <Route path="/especialidades" element={<Especialidades />} />
-              <Route path="/funcionarios" element={<Funcionarios />} />
+              <Route path="/equipamentos" element={<Equipamentos />} />
+              <Route path="/ordens" element={<OrdensServico />} />
+              <Route path="/preventivas" element={<Preventivas />} />
               <Route path="/estoque" element={<Estoque />} />
+              <Route path="/funcionarios" element={<Funcionarios />} />
+              <Route path="/especialidades" element={<Especialidades />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
