@@ -15,6 +15,8 @@ import Preventivas from "@/pages/Preventivas";
 import OrdensServico from "@/pages/OrdensServico";
 import Solicitacoes from "@/pages/Solicitacoes";
 import Relatorios from "@/pages/Relatorios";
+import PMOC from "@/pages/PMOC";
+import OEE from "@/pages/OEE";
 
 const queryClient = new QueryClient();
 
@@ -36,6 +38,8 @@ export default function App() {
               <Route path="/especialidades" element={<Especialidades />} />
               <Route path="/solicitacoes" element={<Solicitacoes />} />
               <Route path="/relatorios" element={<Relatorios />} />
+              <Route path="/pmoc" element={<PMOC />} />
+              <Route path="/oee" element={<OEE />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
