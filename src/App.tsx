@@ -13,6 +13,7 @@ import Estoque from "@/pages/Estoque";
 import Equipamentos from "@/pages/Equipamentos";
 import Preventivas from "@/pages/Preventivas";
 import OrdensServico from "@/pages/OrdensServico";
+import Solicitacoes from "@/pages/Solicitacoes";
 
 const queryClient = new QueryClient();
 
@@ -32,6 +33,7 @@ export default function App() {
               <Route path="/estoque" element={<Estoque />} />
               <Route path="/funcionarios" element={<Funcionarios />} />
               <Route path="/especialidades" element={<Especialidades />} />
+              <Route path="/solicitacoes" element={<Solicitacoes />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
