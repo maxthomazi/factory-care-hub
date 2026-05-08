@@ -2,6 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Search, MapPin, Pencil, Trash2, History, ShieldCheck, ShieldAlert, ShieldX, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
@@ -107,6 +108,7 @@ function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClo
 export default function Equipamentos() {
   const navigate = useNavigate();
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -116,7 +118,7 @@ export default function Equipamentos() {
   const [printAll, setPrintAll] = useState(false);
 
   const { data: equipamentos = [], isLoading } = useQuery({
-    queryKey: ["equipamentos"],
+    queryKey: ["equipamentos", empresaId],
     queryFn: async () => {
       const { data, error } = await supabase.from("equipamentos").select("*").order("nome");
       if (error) throw error;
@@ -127,7 +129,12 @@ export default function Equipamentos() {
   const save = useMutation({
     mutationFn: async () => {
       if (!form.nome || !form.codigo) throw new Error("Preencha nome e código");
-      const payload = { ...form, criticidade: form.criticidade || null, garantia_ate: form.garantia_ate || null };
+      const payload = {
+        ...form,
+        criticidade: form.criticidade || null,
+        garantia_ate: form.garantia_ate || null,
+        empresa_id: empresaId,
+      };
       if (editingId) {
         const { error } = await supabase.from("equipamentos").update(payload).eq("id", editingId);
         if (error) throw error;
@@ -271,25 +278,14 @@ export default function Equipamentos() {
               <p className="text-sm text-muted-foreground">{qrEquip.codigo}</p>
             </div>
             <div className="flex justify-center p-4 bg-white rounded-xl">
-              <QRCodeSVG
-                value={`${window.location.origin}/eq/${qrEquip.id}`}
-                size={200}
-                level="H"
-                includeMargin
-              />
+              <QRCodeSVG value={`${window.location.origin}/eq/${qrEquip.id}`} size={200} level="H" includeMargin />
             </div>
             <p className="text-xs text-center text-muted-foreground break-all">
               {window.location.origin}/eq/{qrEquip.id}
             </p>
             <div className="flex gap-2">
-              <button onClick={() => setQrEquip(null)}
-                className="flex-1 rounded-md border px-4 py-2 text-sm hover:bg-muted">
-                Fechar
-              </button>
-              <button onClick={() => window.print()}
-                className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-                Imprimir
-              </button>
+              <button onClick={() => setQrEquip(null)} className="flex-1 rounded-md border px-4 py-2 text-sm hover:bg-muted">Fechar</button>
+              <button onClick={() => window.print()} className="flex-1 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">Imprimir</button>
             </div>
           </div>
         </div>
@@ -317,8 +313,7 @@ export default function Equipamentos() {
                   <option value="parado">Parado</option>
                   <option value="inativo">Inativo</option>
                 </select></div>
-              <button type="button" onClick={() => setShowExtras(v => !v)}
-                className="text-sm text-primary hover:underline">
+              <button type="button" onClick={() => setShowExtras(v => !v)} className="text-sm text-primary hover:underline">
                 {showExtras ? "▲ Ocultar" : "▼ Informações adicionais"}
               </button>
               {showExtras && (
@@ -351,8 +346,7 @@ export default function Equipamentos() {
               )}
             </div>
             <div className="flex gap-2 justify-end">
-              <button onClick={() => setOpen(false)}
-                className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
+              <button onClick={() => setOpen(false)} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
               <button onClick={() => save.mutate()} disabled={save.isPending}
                 className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
                 {save.isPending ? "Salvando..." : "Salvar"}
