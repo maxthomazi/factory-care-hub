@@ -29,7 +29,17 @@ function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClo
       codigo: eq.codigo,
       localizacao: eq.localizacao || "",
       url: `${origin}/eq/${eq.id}`,
+      qrUrl: `https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=${encodeURIComponent(`${origin}/eq/${eq.id}`)}&ecc=H`,
     }));
+
+    const itemsHtml = items.map(item => `
+      <div class="item">
+        <img src="${item.qrUrl}" alt="QR Code ${item.codigo}" width="120" height="120" />
+        <p class="nome">${item.nome}</p>
+        <p class="codigo">${item.codigo}</p>
+        ${item.localizacao ? `<p class="local">${item.localizacao}</p>` : ""}
+      </div>
+    `).join("");
 
     const html = `
       <!DOCTYPE html>
@@ -41,36 +51,26 @@ function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClo
           body { font-family: Arial, sans-serif; background: white; }
           .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm; padding: 10mm; }
           .item { border: 1px dashed #999; padding: 4mm; text-align: center; break-inside: avoid; page-break-inside: avoid; }
-          .item img { width: 100%; max-width: 120px; height: auto; }
+          .item img { width: 120px; height: 120px; }
           .nome { font-size: 9pt; font-weight: bold; margin-top: 2mm; word-break: break-word; }
           .codigo { font-size: 8pt; color: #555; }
           .local { font-size: 7pt; color: #888; }
           @media print { @page { margin: 8mm; } }
         </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
       </head>
       <body>
-        <div class="grid" id="grid"></div>
+        <div class="grid">${itemsHtml}</div>
         <script>
-          const items = ${JSON.stringify(items)};
-          const grid = document.getElementById('grid');
-          items.forEach(item => {
-            const div = document.createElement('div');
-            div.className = 'item';
-            const qrDiv = document.createElement('div');
-            div.appendChild(qrDiv);
-            new QRCode(qrDiv, {
-              text: item.url,
-              width: 120,
-              height: 120,
-              correctLevel: QRCode.CorrectLevel.H
+          window.onload = function() {
+            const imgs = document.querySelectorAll('img');
+            let loaded = 0;
+            const tryPrint = () => { loaded++; if (loaded >= imgs.length) setTimeout(() => window.print(), 300); };
+            imgs.forEach(img => {
+              if (img.complete) tryPrint();
+              else { img.onload = tryPrint; img.onerror = tryPrint; }
             });
-            div.innerHTML += '<p class="nome">' + item.nome + '</p>';
-            div.innerHTML += '<p class="codigo">' + item.codigo + '</p>';
-            if (item.localizacao) div.innerHTML += '<p class="local">' + item.localizacao + '</p>';
-            grid.appendChild(div);
-          });
-          setTimeout(() => { window.print(); window.close(); }, 1200);
+            if (imgs.length === 0) window.print();
+          };
         <\/script>
       </body>
       </html>
