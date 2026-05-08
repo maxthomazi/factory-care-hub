@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Especialidades() {
+  const { empresaId } = useAuth();
   const [nome, setNome] = useState("");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editNome, setEditNome] = useState("");
   const qc = useQueryClient();
 
   const { data: especialidades = [], isLoading } = useQuery({
-    queryKey: ["especialidades"],
+    queryKey: ["especialidades", empresaId],
     queryFn: async () => {
       const { data, error } = await supabase.from("especialidades").select("*").order("nome");
       if (error) throw error;
@@ -22,7 +24,7 @@ export default function Especialidades() {
   const create = useMutation({
     mutationFn: async () => {
       if (!nome.trim()) throw new Error("Preencha o nome");
-      const { error } = await supabase.from("especialidades").insert({ nome: nome.trim() });
+      const { error } = await supabase.from("especialidades").insert({ nome: nome.trim(), empresa_id: empresaId });
       if (error) throw error;
     },
     onSuccess: () => { qc.invalidateQueries({ queryKey: ["especialidades"] }); setNome(""); toast.success("Especialidade criada!"); },
@@ -63,6 +65,7 @@ export default function Especialidades() {
 
       {isLoading ? <p className="text-muted-foreground text-sm">Carregando...</p> : (
         <div className="space-y-2">
+          {especialidades.length === 0 && <p className="text-muted-foreground text-sm">Nenhuma especialidade cadastrada.</p>}
           {especialidades.map(esp => (
             <div key={esp.id} className="flex items-center justify-between rounded-lg border bg-card px-4 py-3">
               {editingId === esp.id ? (
