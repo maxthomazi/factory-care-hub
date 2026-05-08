@@ -1,22 +1,24 @@
 import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, Pencil, Trash2, Printer } from "lucide-react";
+import { useAuth } from "@/contexts/AuthContext";
+import { Plus, Search, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 const hoje = new Date().toISOString().split("T")[0];
 
 const STATUS_BADGE: Record<string, string> = {
-  "Aberta": "bg-amber-100 text-amber-700",
+  "Aberta":       "bg-amber-100 text-amber-700",
   "Em Andamento": "bg-blue-100 text-blue-700",
-  "Finalizada": "bg-green-100 text-green-700",
-  "Cancelada": "bg-slate-100 text-slate-600",
+  "Finalizada":   "bg-green-100 text-green-700",
+  "Cancelada":    "bg-slate-100 text-slate-600",
 };
 
 const FORM_VAZIO = { equipamento_id: "", descricao: "", responsavel_id: "", status: "Aberta", solucao: "", data_abertura: hoje, data_previsao: "" };
 
 export default function OrdensServico() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("todas");
   const [open, setOpen] = useState(false);
@@ -27,7 +29,7 @@ export default function OrdensServico() {
   const pendingPecas = useRef<{ pecaId: string; quantidade: number }[]>([]);
 
   const { data: ordens = [], isLoading } = useQuery({
-    queryKey: ["ordens-servico"],
+    queryKey: ["ordens-servico", empresaId],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ordens_servico")
@@ -39,7 +41,7 @@ export default function OrdensServico() {
   });
 
   const { data: equipamentos = [] } = useQuery({
-    queryKey: ["equipamentos-select"],
+    queryKey: ["equipamentos-select", empresaId],
     queryFn: async () => {
       const { data } = await supabase.from("equipamentos").select("id, nome, codigo").order("nome");
       return data as any[] || [];
@@ -47,17 +49,9 @@ export default function OrdensServico() {
   });
 
   const { data: funcionarios = [] } = useQuery({
-    queryKey: ["funcionarios-select"],
+    queryKey: ["funcionarios-select", empresaId],
     queryFn: async () => {
       const { data } = await supabase.from("funcionarios").select("id, nome").eq("ativo", true).order("nome");
-      return data as any[] || [];
-    },
-  });
-
-  const { data: pecas = [] } = useQuery({
-    queryKey: ["pecas-select"],
-    queryFn: async () => {
-      const { data } = await supabase.from("pecas").select("id, nome, codigo, valor_unitario").order("nome");
       return data as any[] || [];
     },
   });
@@ -75,6 +69,7 @@ export default function OrdensServico() {
         solucao: form.solucao || null,
         data_abertura: form.data_abertura,
         data_previsao: form.data_previsao || null,
+        empresa_id: empresaId,
       };
       if (form.status === "Finalizada") payload.data_fechamento = new Date().toISOString().split("T")[0];
 
@@ -90,7 +85,12 @@ export default function OrdensServico() {
     },
     onSuccess: async (os: any) => {
       if (!editingId && tecnicoId && tecnicoHoras) {
-        await supabase.from("os_tecnicos").insert({ os_id: os.id, funcionario_id: tecnicoId, horas: Number(tecnicoHoras) });
+        await supabase.from("os_tecnicos").insert({
+          os_id: os.id,
+          funcionario_id: tecnicoId,
+          horas: Number(tecnicoHoras),
+          empresa_id: empresaId,
+        });
       }
       qc.invalidateQueries({ queryKey: ["ordens-servico"] });
       toast.success(editingId ? "OS atualizada!" : "OS criada!");
@@ -183,8 +183,11 @@ export default function OrdensServico() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1 items-center">
-                      <button onClick={() => { setEditingId(os.id); setForm({ equipamento_id: os.equipamento_id || "", descricao: os.descricao || "", responsavel_id: os.responsavel_id || "", status: os.status || "Aberta", solucao: os.solucao || "", data_abertura: os.data_abertura || hoje, data_previsao: os.data_previsao || "" }); setOpen(true); }}
-                        className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4 text-muted-foreground" /></button>
+                      <button onClick={() => {
+                        setEditingId(os.id);
+                        setForm({ equipamento_id: os.equipamento_id || "", descricao: os.descricao || "", responsavel_id: os.responsavel_id || "", status: os.status || "Aberta", solucao: os.solucao || "", data_abertura: os.data_abertura || hoje, data_previsao: os.data_previsao || "" });
+                        setOpen(true);
+                      }} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4 text-muted-foreground" /></button>
                       <button onClick={() => { if (confirm("Excluir esta OS?")) remove.mutate(os.id); }}
                         className="p-1.5 rounded hover:bg-muted"><Trash2 className="h-4 w-4 text-destructive" /></button>
                     </div>
