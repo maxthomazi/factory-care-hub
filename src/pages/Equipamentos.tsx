@@ -19,32 +19,91 @@ function GarantiaBadge({ garantia_ate }: { garantia_ate?: string | null }) {
 const FORM_VAZIO = { nome: "", codigo: "", localizacao: "", status: "operando", criticidade: "", grupo: "", modelo: "", centro_custo: "", numero_serie: "", classificacao: "equipamento", garantia_ate: "" };
 
 function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClose: () => void }) {
+  function handlePrint() {
+    const origin = window.location.origin;
+    const win = window.open("", "_blank", "width=900,height=700");
+    if (!win) return;
+
+    // Gera QR Codes como data URLs via canvas
+    const items = equipamentos.map(eq => ({
+      nome: eq.nome,
+      codigo: eq.codigo,
+      localizacao: eq.localizacao || "",
+      url: `${origin}/eq/${eq.id}`,
+    }));
+
+    const html = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <title>QR Codes — Equipamentos</title>
+        <style>
+          * { box-sizing: border-box; margin: 0; padding: 0; }
+          body { font-family: Arial, sans-serif; background: white; }
+          .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 6mm; padding: 10mm; }
+          .item { border: 1px dashed #999; padding: 4mm; text-align: center; break-inside: avoid; page-break-inside: avoid; }
+          .item img { width: 100%; max-width: 120px; height: auto; }
+          .nome { font-size: 9pt; font-weight: bold; margin-top: 2mm; word-break: break-word; }
+          .codigo { font-size: 8pt; color: #555; }
+          .local { font-size: 7pt; color: #888; }
+          @media print { @page { margin: 8mm; } }
+        </style>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+      </head>
+      <body>
+        <div class="grid" id="grid"></div>
+        <script>
+          const items = ${JSON.stringify(items)};
+          const grid = document.getElementById('grid');
+          items.forEach(item => {
+            const div = document.createElement('div');
+            div.className = 'item';
+            const qrDiv = document.createElement('div');
+            div.appendChild(qrDiv);
+            new QRCode(qrDiv, {
+              text: item.url,
+              width: 120,
+              height: 120,
+              correctLevel: QRCode.CorrectLevel.H
+            });
+            div.innerHTML += '<p class="nome">' + item.nome + '</p>';
+            div.innerHTML += '<p class="codigo">' + item.codigo + '</p>';
+            if (item.localizacao) div.innerHTML += '<p class="local">' + item.localizacao + '</p>';
+            grid.appendChild(div);
+          });
+          setTimeout(() => { window.print(); window.close(); }, 1200);
+        </script>
+      </body>
+      </html>
+    `;
+
+    win.document.write(html);
+    win.document.close();
+  }
+
   return (
-    <>
-      {/* Overlay — visível apenas na tela, oculto na impressão */}
-      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 print:hidden">
-        <div className="w-full max-w-lg rounded-xl bg-card border shadow-lg p-6 space-y-4">
-          <h2 className="text-lg font-semibold">Imprimir todos os QR Codes</h2>
-          <p className="text-sm text-muted-foreground">
-            Serão impressos <strong>{equipamentos.length}</strong> QR Codes em grade — 4 por linha, prontos para recortar e colar nas máquinas.
-          </p>
-          <div className="grid grid-cols-4 gap-3 p-3 border rounded-lg bg-muted/30 max-h-48 overflow-y-auto">
-            {equipamentos.map(eq => (
-              <div key={eq.id} className="text-center">
-                <QRCodeSVG value={`${window.location.origin}/eq/${eq.id}`} size={48} level="H" />
-                <p className="text-xs truncate mt-1 font-medium">{eq.codigo}</p>
-              </div>
-            ))}
-          </div>
-          <div className="flex gap-2 justify-end">
-            <button onClick={onClose} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
-            <button onClick={() => window.print()}
-              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-              <Printer className="h-4 w-4" />Imprimir
-            </button>
-          </div>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+      <div className="w-full max-w-md rounded-xl bg-card border shadow-lg p-6 space-y-4">
+        <h2 className="text-lg font-semibold">Imprimir QR Codes</h2>
+        <p className="text-sm text-muted-foreground">
+          Serão impressos <strong>{equipamentos.length}</strong> QR Codes em grade (4 por linha), prontos para recortar e colar nas máquinas.
+        </p>
+        <div className="rounded-lg bg-muted/50 border p-3 text-xs text-muted-foreground space-y-1">
+          <p>✅ Abre uma nova janela apenas com os QR Codes</p>
+          <p>✅ 4 por linha com nome, código e localização</p>
+          <p>✅ Bordas tracejadas para recorte</p>
+        </div>
+        <div className="flex gap-2 justify-end">
+          <button onClick={onClose} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
+          <button onClick={handlePrint}
+            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            <Printer className="h-4 w-4" />Abrir e imprimir
+          </button>
         </div>
       </div>
+    </div>
+  );
+}
 
       {/* Conteúdo de impressão — oculto na tela, visível na impressão */}
       <div className="hidden print:block">
