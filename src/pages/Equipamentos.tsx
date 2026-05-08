@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
-import { Plus, Search, MapPin, Pencil, Trash2, History, ShieldCheck, ShieldAlert, ShieldX } from "lucide-react";
+import { Plus, Search, MapPin, Pencil, Trash2, History, ShieldCheck, ShieldAlert, ShieldX, Printer } from "lucide-react";
 import { toast } from "sonner";
 import { QRCodeSVG } from "qrcode.react";
 
@@ -18,6 +18,63 @@ function GarantiaBadge({ garantia_ate }: { garantia_ate?: string | null }) {
 
 const FORM_VAZIO = { nome: "", codigo: "", localizacao: "", status: "operando", criticidade: "", grupo: "", modelo: "", centro_custo: "", numero_serie: "", classificacao: "equipamento", garantia_ate: "" };
 
+function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClose: () => void }) {
+  return (
+    <>
+      {/* Overlay — visível apenas na tela, oculto na impressão */}
+      <div className="fixed inset-0 z-50 bg-black/50 flex items-center justify-center p-4 print:hidden">
+        <div className="w-full max-w-lg rounded-xl bg-card border shadow-lg p-6 space-y-4">
+          <h2 className="text-lg font-semibold">Imprimir todos os QR Codes</h2>
+          <p className="text-sm text-muted-foreground">
+            Serão impressos <strong>{equipamentos.length}</strong> QR Codes em grade — 4 por linha, prontos para recortar e colar nas máquinas.
+          </p>
+          <div className="grid grid-cols-4 gap-3 p-3 border rounded-lg bg-muted/30 max-h-48 overflow-y-auto">
+            {equipamentos.map(eq => (
+              <div key={eq.id} className="text-center">
+                <QRCodeSVG value={`${window.location.origin}/eq/${eq.id}`} size={48} level="H" />
+                <p className="text-xs truncate mt-1 font-medium">{eq.codigo}</p>
+              </div>
+            ))}
+          </div>
+          <div className="flex gap-2 justify-end">
+            <button onClick={onClose} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
+            <button onClick={() => window.print()}
+              className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+              <Printer className="h-4 w-4" />Imprimir
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* Conteúdo de impressão — oculto na tela, visível na impressão */}
+      <div className="hidden print:block">
+        <style>{`
+          @page { margin: 10mm; }
+          .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8mm; }
+          .qr-item { border: 1px dashed #ccc; padding: 4mm; text-align: center; break-inside: avoid; }
+          .qr-item p { font-size: 8pt; margin: 2mm 0 0; font-weight: bold; }
+          .qr-item small { font-size: 7pt; color: #666; display: block; }
+        `}</style>
+        <div className="qr-grid">
+          {equipamentos.map(eq => (
+            <div key={eq.id} className="qr-item">
+              <QRCodeSVG
+                value={`${window.location.origin}/eq/${eq.id}`}
+                size={120}
+                level="H"
+                includeMargin
+              />
+              <p>{eq.nome}</p>
+              <small>{eq.codigo}</small>
+              {eq.localizacao && <small>{eq.localizacao}</small>}
+            </div>
+          ))}
+        </div>
+      </div>
+    </>
+  );
+}
+
 export default function Equipamentos() {
   const navigate = useNavigate();
   const qc = useQueryClient();
@@ -27,6 +84,7 @@ export default function Equipamentos() {
   const [form, setForm] = useState(FORM_VAZIO);
   const [showExtras, setShowExtras] = useState(false);
   const [qrEquip, setQrEquip] = useState<{ id: string; nome: string; codigo: string } | null>(null);
+  const [printAll, setPrintAll] = useState(false);
 
   const { data: equipamentos = [], isLoading } = useQuery({
     queryKey: ["equipamentos"],
@@ -89,10 +147,18 @@ export default function Equipamentos() {
     <div className="space-y-6 animate-fade-in">
       <div className="page-header">
         <h1 className="page-title">Equipamentos</h1>
-        <button onClick={() => { setEditingId(null); setForm(FORM_VAZIO); setShowExtras(false); setOpen(true); }}
-          className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
-          <Plus className="h-4 w-4" />Novo Equipamento
-        </button>
+        <div className="flex gap-2">
+          {equipamentos.length > 0 && (
+            <button onClick={() => setPrintAll(true)}
+              className="flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium hover:bg-muted transition-colors">
+              <Printer className="h-4 w-4" />Imprimir QR Codes
+            </button>
+          )}
+          <button onClick={() => { setEditingId(null); setForm(FORM_VAZIO); setShowExtras(false); setOpen(true); }}
+            className="flex items-center gap-2 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90">
+            <Plus className="h-4 w-4" />Novo Equipamento
+          </button>
+        </div>
       </div>
 
       <div className="relative max-w-sm">
@@ -161,9 +227,17 @@ export default function Equipamentos() {
           </div>
         )}
 
-      {/* Modal QR Code */}
+      {/* Modal imprimir todos */}
+      {printAll && (
+        <PrintAllQRCodes
+          equipamentos={filtered.length > 0 ? filtered : equipamentos}
+          onClose={() => setPrintAll(false)}
+        />
+      )}
+
+      {/* Modal QR Code individual */}
       {qrEquip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 print:hidden">
           <div className="w-full max-w-sm rounded-xl bg-card border shadow-lg p-6 space-y-4">
             <div className="text-center space-y-1">
               <h2 className="text-lg font-semibold">{qrEquip.nome}</h2>
