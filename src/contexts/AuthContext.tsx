@@ -5,12 +5,13 @@ interface AuthContextType {
   user: any;
   profile: any;
   role: string;
+  empresaId: string | null;
   signOut: () => void;
   isLoading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType>({
-  user: null, profile: null, role: "", signOut: () => {}, isLoading: true,
+  user: null, profile: null, role: "", empresaId: null, signOut: () => {}, isLoading: true,
 });
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
@@ -49,8 +50,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.location.href = "/login";
   }
 
+  const empresaId = profile?.empresa_id || null;
+
   return (
-    <AuthContext.Provider value={{ user, profile, role: profile?.role || "tecnico", signOut, isLoading }}>
+    <AuthContext.Provider value={{
+      user, profile, role: profile?.role || "tecnico",
+      empresaId, signOut, isLoading
+    }}>
       {children}
     </AuthContext.Provider>
   );
