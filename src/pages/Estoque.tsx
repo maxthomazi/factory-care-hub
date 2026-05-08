@@ -1,18 +1,20 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, Search, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Estoque() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [search, setSearch] = useState("");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ nome: "", codigo: "", quantidade: "", estoque_minimo: "", unidade: "un", valor_unitario: "" });
 
   const { data: pecas = [], isLoading } = useQuery({
-    queryKey: ["pecas"],
+    queryKey: ["pecas", empresaId],
     queryFn: async () => {
       const { data, error } = await supabase.from("pecas").select("*").order("nome");
       if (error) throw error;
@@ -30,6 +32,7 @@ export default function Estoque() {
         estoque_minimo: Number(form.estoque_minimo) || 0,
         unidade: form.unidade || "un",
         valor_unitario: Number(form.valor_unitario) || 0,
+        empresa_id: empresaId,
       };
       if (editingId) {
         const { error } = await supabase.from("pecas").update(payload).eq("id", editingId);
