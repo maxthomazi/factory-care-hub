@@ -1,17 +1,19 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, Users } from "lucide-react";
 import { toast } from "sonner";
 
 export default function Funcionarios() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ nome: "", especialidade_id: "", salario_mensal: "", ativo: true });
 
   const { data: funcionarios = [], isLoading } = useQuery({
-    queryKey: ["funcionarios"],
+    queryKey: ["funcionarios", empresaId],
     queryFn: async () => {
       const { data, error } = await supabase.from("funcionarios").select("*, especialidades(nome)").order("nome");
       if (error) throw error;
@@ -20,7 +22,7 @@ export default function Funcionarios() {
   });
 
   const { data: especialidades = [] } = useQuery({
-    queryKey: ["especialidades"],
+    queryKey: ["especialidades", empresaId],
     queryFn: async () => {
       const { data } = await supabase.from("especialidades").select("*").order("nome");
       return data as any[] || [];
@@ -35,6 +37,7 @@ export default function Funcionarios() {
         especialidade_id: form.especialidade_id || null,
         salario_mensal: Number(form.salario_mensal) || 0,
         ativo: form.ativo,
+        empresa_id: empresaId,
       };
       if (editingId) {
         const { error } = await supabase.from("funcionarios").update(payload).eq("id", editingId);
