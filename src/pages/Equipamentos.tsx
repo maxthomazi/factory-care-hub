@@ -24,7 +24,6 @@ function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClo
     const win = window.open("", "_blank", "width=900,height=700");
     if (!win) return;
 
-    // Gera QR Codes como data URLs via canvas
     const items = equipamentos.map(eq => ({
       nome: eq.nome,
       codigo: eq.codigo,
@@ -48,7 +47,7 @@ function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClo
           .local { font-size: 7pt; color: #888; }
           @media print { @page { margin: 8mm; } }
         </style>
-        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"><\/script>
       </head>
       <body>
         <div class="grid" id="grid"></div>
@@ -72,7 +71,7 @@ function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClo
             grid.appendChild(div);
           });
           setTimeout(() => { window.print(); window.close(); }, 1200);
-        </script>
+        <\/script>
       </body>
       </html>
     `;
@@ -102,35 +101,6 @@ function PrintAllQRCodes({ equipamentos, onClose }: { equipamentos: any[]; onClo
         </div>
       </div>
     </div>
-  );
-}
-
-      {/* Conteúdo de impressão — oculto na tela, visível na impressão */}
-      <div className="hidden print:block">
-        <style>{`
-          @page { margin: 10mm; }
-          .qr-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8mm; }
-          .qr-item { border: 1px dashed #ccc; padding: 4mm; text-align: center; break-inside: avoid; }
-          .qr-item p { font-size: 8pt; margin: 2mm 0 0; font-weight: bold; }
-          .qr-item small { font-size: 7pt; color: #666; display: block; }
-        `}</style>
-        <div className="qr-grid">
-          {equipamentos.map(eq => (
-            <div key={eq.id} className="qr-item">
-              <QRCodeSVG
-                value={`${window.location.origin}/eq/${eq.id}`}
-                size={120}
-                level="H"
-                includeMargin
-              />
-              <p>{eq.nome}</p>
-              <small>{eq.codigo}</small>
-              {eq.localizacao && <small>{eq.localizacao}</small>}
-            </div>
-          ))}
-        </div>
-      </div>
-    </>
   );
 }
 
@@ -286,7 +256,6 @@ export default function Equipamentos() {
           </div>
         )}
 
-      {/* Modal imprimir todos */}
       {printAll && (
         <PrintAllQRCodes
           equipamentos={filtered.length > 0 ? filtered : equipamentos}
@@ -294,9 +263,8 @@ export default function Equipamentos() {
         />
       )}
 
-      {/* Modal QR Code individual */}
       {qrEquip && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 print:hidden">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-sm rounded-xl bg-card border shadow-lg p-6 space-y-4">
             <div className="text-center space-y-1">
               <h2 className="text-lg font-semibold">{qrEquip.nome}</h2>
@@ -327,7 +295,6 @@ export default function Equipamentos() {
         </div>
       )}
 
-      {/* Modal Criar/Editar */}
       {open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
           <div className="w-full max-w-md rounded-xl bg-card border shadow-lg p-6 space-y-4 max-h-[90vh] overflow-y-auto">
@@ -350,12 +317,10 @@ export default function Equipamentos() {
                   <option value="parado">Parado</option>
                   <option value="inativo">Inativo</option>
                 </select></div>
-
               <button type="button" onClick={() => setShowExtras(v => !v)}
                 className="text-sm text-primary hover:underline">
                 {showExtras ? "▲ Ocultar" : "▼ Informações adicionais"}
               </button>
-
               {showExtras && (
                 <div className="space-y-3 border-t pt-3">
                   <div className="grid grid-cols-2 gap-3">
