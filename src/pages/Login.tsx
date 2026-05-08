@@ -36,33 +36,35 @@ export default function Login() {
       }
 
       if (data.user) {
-        // 2. Criar empresa
+        // 2. Usar função SQL segura para criar empresa + usuário
         const slug = nomeEmpresa.trim().toLowerCase()
           .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
           .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
 
-        const { data: empresa, error: empError } = await supabase
-          .from("empresas")
-          .insert({ nome: nomeEmpresa.trim(), slug: slug + "-" + Date.now(), plano: "trial", ativo: true })
-          .select().single();
+        const { error: fnError } = await supabase.rpc("criar_empresa_e_usuario", {
+          p_user_id: data.user.id,
+          p_nome: nome.trim(),
+          p_email: email,
+          p_nome_empresa: nomeEmpresa.trim(),
+          p_slug: slug + "-" + Date.now(),
+        });
 
-        if (empError) {
+        if (fnError) {
           setError("Erro ao criar empresa. Tente novamente.");
           setLoading(false); return;
         }
 
-        // 3. Criar perfil do usuário vinculado à empresa
-        await supabase.from("usuarios").insert({
-          id: data.user.id,
-          nome: nome.trim(),
-          email,
-          role: "admin",
-          empresa_id: empresa.id,
-        });
-
-        setSucesso("Cadastro realizado! Verifique seu email para confirmar a conta, depois faça login.");
-        setModo("login");
-        setNome(""); setNomeEmpresa(""); setEmail(""); setPassword("");
+        setSucesso("Conta criada com sucesso! Fazendo login...");
+        
+        // 3. Login automático
+        const { error: loginError } = await supabase.auth.signInWithPassword({ email, password });
+        if (!loginError) {
+          navigate("/");
+        } else {
+          setSucesso("Conta criada! Faça login para continuar.");
+          setModo("login");
+          setNome(""); setNomeEmpresa(""); setPassword("");
+        }
       }
     }
     setLoading(false);
