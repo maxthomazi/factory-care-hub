@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/contexts/AuthContext";
 import { Plus, Pencil, Trash2, CalendarClock } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -34,13 +35,14 @@ const FORM_VAZIO = { titulo: "", equipamento_id: "", equipamento_nome: "", frequ
 
 export default function Preventivas() {
   const qc = useQueryClient();
+  const { empresaId } = useAuth();
   const [filtro, setFiltro] = useState<Filtro>("todos");
   const [open, setOpen] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState(FORM_VAZIO);
 
   const { data: preventivas = [], isLoading } = useQuery({
-    queryKey: ["preventivas"],
+    queryKey: ["preventivas", empresaId],
     queryFn: async () => {
       const { data, error } = await supabase.from("preventivas").select("*, equipamentos(nome)").order("proxima_data");
       if (error) throw error;
@@ -49,7 +51,7 @@ export default function Preventivas() {
   });
 
   const { data: equipamentos = [] } = useQuery({
-    queryKey: ["equipamentos-select"],
+    queryKey: ["equipamentos-select", empresaId],
     queryFn: async () => {
       const { data } = await supabase.from("equipamentos").select("id, nome, codigo").order("nome");
       return data as any[] || [];
@@ -67,6 +69,7 @@ export default function Preventivas() {
         frequencia: form.frequencia || null,
         proxima_data: form.proxima_data || null,
         status: "em_dia",
+        empresa_id: empresaId,
       };
       if (editingId) {
         const { error } = await supabase.from("preventivas").update(payload).eq("id", editingId);
