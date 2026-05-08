@@ -8,6 +8,7 @@ export default function Login() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [nome, setNome] = useState("");
+  const [nomeEmpresa, setNomeEmpresa] = useState("");
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
   const [sucesso, setSucesso] = useState("");
@@ -24,14 +25,44 @@ export default function Login() {
       else navigate("/");
     } else {
       if (!nome.trim()) { setError("Preencha seu nome."); setLoading(false); return; }
-      const { data, error } = await supabase.auth.signUp({ email, password });
-      if (error) {
-        setError(error.message.includes("already") ? "Email já cadastrado." : "Erro ao cadastrar.");
-      } else if (data.user) {
-        await supabase.from("usuarios").insert({ id: data.user.id, nome: nome.trim(), email, role: "tecnico" });
-        setSucesso("Cadastro realizado! Verifique seu email para confirmar a conta.");
+      if (!nomeEmpresa.trim()) { setError("Preencha o nome da empresa."); setLoading(false); return; }
+      if (password.length < 6) { setError("Senha deve ter ao menos 6 caracteres."); setLoading(false); return; }
+
+      // 1. Criar usuário no Auth
+      const { data, error: authError } = await supabase.auth.signUp({ email, password });
+      if (authError) {
+        setError(authError.message.includes("already") ? "Email já cadastrado." : "Erro ao cadastrar.");
+        setLoading(false); return;
+      }
+
+      if (data.user) {
+        // 2. Criar empresa
+        const slug = nomeEmpresa.trim().toLowerCase()
+          .normalize("NFD").replace(/[\u0300-\u036f]/g, "")
+          .replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+
+        const { data: empresa, error: empError } = await supabase
+          .from("empresas")
+          .insert({ nome: nomeEmpresa.trim(), slug: slug + "-" + Date.now(), plano: "trial", ativo: true })
+          .select().single();
+
+        if (empError) {
+          setError("Erro ao criar empresa. Tente novamente.");
+          setLoading(false); return;
+        }
+
+        // 3. Criar perfil do usuário vinculado à empresa
+        await supabase.from("usuarios").insert({
+          id: data.user.id,
+          nome: nome.trim(),
+          email,
+          role: "admin",
+          empresa_id: empresa.id,
+        });
+
+        setSucesso("Cadastro realizado! Verifique seu email para confirmar a conta, depois faça login.");
         setModo("login");
-        setNome(""); setEmail(""); setPassword("");
+        setNome(""); setNomeEmpresa(""); setEmail(""); setPassword("");
       }
     }
     setLoading(false);
@@ -68,46 +99,35 @@ export default function Login() {
 
           <form onSubmit={handleSubmit} className="space-y-4">
             {modo === "cadastro" && (
-              <div className="space-y-1.5">
-                <label className="text-sm font-medium">Nome completo</label>
-                <input
-                  type="text"
-                  value={nome}
-                  onChange={e => setNome(e.target.value)}
-                  placeholder="Seu nome"
-                  required
-                  className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-                />
-              </div>
+              <>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Nome completo</label>
+                  <input type="text" value={nome} onChange={e => setNome(e.target.value)}
+                    placeholder="Seu nome" required
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+                </div>
+                <div className="space-y-1.5">
+                  <label className="text-sm font-medium">Nome da empresa</label>
+                  <input type="text" value={nomeEmpresa} onChange={e => setNomeEmpresa(e.target.value)}
+                    placeholder="Ex: Indústria ABC Ltda" required
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
+                </div>
+              </>
             )}
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Email</label>
-              <input
-                type="email"
-                value={email}
-                onChange={e => setEmail(e.target.value)}
-                placeholder="seu@email.com"
-                required
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
+              <input type="email" value={email} onChange={e => setEmail(e.target.value)}
+                placeholder="seu@email.com" required
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
             </div>
             <div className="space-y-1.5">
               <label className="text-sm font-medium">Senha</label>
-              <input
-                type="password"
-                value={password}
-                onChange={e => setPassword(e.target.value)}
-                placeholder="••••••••"
-                required
-                minLength={6}
-                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
-              />
+              <input type="password" value={password} onChange={e => setPassword(e.target.value)}
+                placeholder="••••••••" required minLength={6}
+                className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring" />
             </div>
-            <button
-              type="submit"
-              disabled={loading}
-              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50"
-            >
+            <button type="submit" disabled={loading}
+              className="w-full rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50">
               {loading ? "Aguarde..." : modo === "login" ? "Entrar" : "Criar conta"}
             </button>
           </form>
@@ -118,7 +138,7 @@ export default function Login() {
                 Não tem conta?{" "}
                 <button onClick={() => { setModo("cadastro"); setError(""); setSucesso(""); }}
                   className="text-primary font-medium hover:underline">
-                  Criar conta
+                  Criar conta grátis
                 </button>
               </p>
             ) : (
@@ -131,6 +151,12 @@ export default function Login() {
               </p>
             )}
           </div>
+
+          {modo === "cadastro" && (
+            <p className="text-xs text-center text-muted-foreground">
+              14 dias grátis · Sem cartão de crédito
+            </p>
+          )}
         </div>
       </div>
     </div>
