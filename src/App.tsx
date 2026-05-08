@@ -21,6 +21,8 @@ import MapaSituacional from "@/pages/MapaSituacional";
 import EquipamentoPublico from "@/pages/EquipamentoPublico";
 import EquipamentoHistorico from "@/pages/EquipamentoHistorico";
 import ImportacaoEquipamentos from "@/pages/ImportacaoEquipamentos";
+import Admin from "@/pages/Admin";
+import Planos from "@/pages/Planos";
 
 const queryClient = new QueryClient();
 
@@ -48,6 +50,8 @@ export default function App() {
               <Route path="/oee" element={<OEE />} />
               <Route path="/mapa" element={<MapaSituacional />} />
               <Route path="/importacao" element={<ImportacaoEquipamentos />} />
+              <Route path="/admin" element={<Admin />} />
+              <Route path="/planos" element={<Planos />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
