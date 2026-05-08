@@ -20,6 +20,7 @@ import OEE from "@/pages/OEE";
 import MapaSituacional from "@/pages/MapaSituacional";
 import EquipamentoPublico from "@/pages/EquipamentoPublico";
 import EquipamentoHistorico from "@/pages/EquipamentoHistorico";
+import ImportacaoEquipamentos from "@/pages/ImportacaoEquipamentos";
 
 const queryClient = new QueryClient();
 
@@ -46,6 +47,7 @@ export default function App() {
               <Route path="/pmoc" element={<PMOC />} />
               <Route path="/oee" element={<OEE />} />
               <Route path="/mapa" element={<MapaSituacional />} />
+              <Route path="/importacao" element={<ImportacaoEquipamentos />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>
