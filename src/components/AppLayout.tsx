@@ -10,7 +10,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { cn } from "@/lib/utils";
 
 const NAV_PRINCIPAL = [
-  { to: "/",            icon: LayoutDashboard, label: "Dashboard"    },
+  { to: "/dashboard",   icon: LayoutDashboard, label: "Dashboard"    },
   { to: "/ordens",      icon: ClipboardList,   label: "Ordens"       },
   { to: "/pmoc",        icon: CalendarRange,   label: "Calendário"   },
   { to: "/preventivas", icon: CalendarClock,   label: "Preventivas"  },
