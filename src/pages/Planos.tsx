@@ -80,9 +80,9 @@ export default function Planos() {
   return (
     <div className="space-y-8 animate-fade-in">
       <div className="text-center space-y-3">
-        <h1 className="text-3xl font-bold">Planos e Preços</h1>
+        <h1 className="text-3xl font-bold">MGM — Planos e Preços</h1>
         <p className="text-muted-foreground max-w-lg mx-auto">
-          Escolha o plano ideal para sua equipe de manutenção. Todos os planos incluem 14 dias grátis.
+          Escolha o plano ideal para sua equipe. Todos os planos incluem 14 dias grátis.
         </p>
 
         {/* Toggle mensal/anual */}

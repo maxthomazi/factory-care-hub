@@ -50,7 +50,7 @@ export function AppLayout() {
           <div className="h-7 w-7 rounded-lg bg-primary flex items-center justify-center">
             <Wrench className="h-4 w-4 text-primary-foreground" />
           </div>
-          <span className="font-bold text-sm hidden sm:block">CMMS Pro</span>
+          <span className="font-bold text-sm hidden sm:block">MGM</span>
         </div>
 
         <nav className="hidden md:flex items-center gap-1 flex-1">

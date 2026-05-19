@@ -84,7 +84,7 @@ export default function EquipamentoPublico() {
           <div className="h-12 w-12 rounded-xl bg-primary flex items-center justify-center mx-auto">
             <Wrench className="h-6 w-6 text-primary-foreground" />
           </div>
-          <h1 className="text-xl font-bold">Solicitação de Serviço</h1>
+          <h1 className="text-xl font-bold">MGM —Solicitação de Serviço</h1>
         </div>
 
         {/* Equipamento */}

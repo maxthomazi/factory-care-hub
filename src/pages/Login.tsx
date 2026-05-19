@@ -78,9 +78,9 @@ export default function Login() {
             <div className="h-10 w-10 rounded-xl bg-primary flex items-center justify-center">
               <Wrench className="h-6 w-6 text-primary-foreground" />
             </div>
-            <span className="text-2xl font-bold">CMMS Pro</span>
-          </div>
-          <p className="text-sm text-muted-foreground">Gestão de Manutenção Industrial</p>
+            <span className="text-2xl font-bold">MGM</span>
+</div>
+<p className="text-sm text-muted-foreground">Máxima Gestão e Manutenção</p>
         </div>
 
         <div className="rounded-xl border bg-card p-6 shadow-sm space-y-4">
