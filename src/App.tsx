@@ -23,6 +23,7 @@ import EquipamentoHistorico from "@/pages/EquipamentoHistorico";
 import ImportacaoEquipamentos from "@/pages/ImportacaoEquipamentos";
 import Admin from "@/pages/Admin";
 import Planos from "@/pages/Planos";
+import LandingPage from "@/pages/LandingPage";
 
 const queryClient = new QueryClient();
 
@@ -33,10 +34,14 @@ export default function App() {
       <BrowserRouter>
         <AuthProvider>
           <Routes>
+            {/* Rotas públicas */}
+            <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/eq/:id" element={<EquipamentoPublico />} />
+
+            {/* Rotas protegidas */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
-              <Route path="/" element={<Dashboard />} />
+              <Route path="/dashboard" element={<Dashboard />} />
               <Route path="/equipamentos" element={<Equipamentos />} />
               <Route path="/equipamentos/:id/historico" element={<EquipamentoHistorico />} />
               <Route path="/ordens" element={<OrdensServico />} />

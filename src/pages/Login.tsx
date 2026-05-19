@@ -22,7 +22,7 @@ export default function Login() {
     if (modo === "login") {
       const { error } = await supabase.auth.signInWithPassword({ email, password });
       if (error) setError("Email ou senha incorretos.");
-      else navigate("/");
+      else navigate("/dashboard");
     } else {
       if (!nome.trim()) { setError("Preencha seu nome."); setLoading(false); return; }
       if (!nomeEmpresa.trim()) { setError("Preencha o nome da empresa."); setLoading(false); return; }
