@@ -24,6 +24,8 @@ import ImportacaoEquipamentos from "@/pages/ImportacaoEquipamentos";
 import Admin from "@/pages/Admin";
 import Planos from "@/pages/Planos";
 import LandingPage from "@/pages/LandingPage";
+import Lubrificacao from "@/pages/Lubrificacao";
+import ChecklistTemplates from "@/pages/ChecklistTemplates";
 
 const queryClient = new QueryClient();
 
@@ -57,6 +59,8 @@ export default function App() {
               <Route path="/importacao" element={<ImportacaoEquipamentos />} />
               <Route path="/admin" element={<Admin />} />
               <Route path="/planos" element={<Planos />} />
+              <Route path="/lubrificacao" element={<Lubrificacao />} />
+              <Route path="/checklist-templates" element={<ChecklistTemplates />} />
             </Route>
             <Route path="*" element={<NotFound />} />
           </Routes>

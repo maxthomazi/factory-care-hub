@@ -3,7 +3,7 @@ import { Outlet, NavLink, useLocation, useNavigate } from "react-router-dom";
 import {
   LayoutDashboard, ClipboardList, Settings2, Package, Wrench,
   CalendarClock, Users, Tag, Bell, ClipboardCheck, BarChart2,
-  Map, CreditCard, CalendarRange, ShieldCheck, Activity,
+  Map, CreditCard, CalendarRange, ShieldCheck, Activity, Droplets,
   Menu, X, LogOut, ChevronDown,
 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
@@ -20,6 +20,7 @@ const NAV_PRINCIPAL = [
 
 const NAV_MAIS = [
   { to: "/estoque",             icon: Package,        label: "Estoque"        },
+  { to: "/lubrificacao",        icon: Droplets,       label: "Lubrificação"   },
   { to: "/funcionarios",        icon: Users,          label: "Funcionários"   },
   { to: "/especialidades",      icon: Tag,            label: "Especialidades" },
   { to: "/solicitacoes",        icon: Bell,           label: "Solicitações"   },
