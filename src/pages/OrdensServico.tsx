@@ -2,7 +2,7 @@ import { useState, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { Plus, Search, Pencil, Trash2 } from "lucide-react";
+import { Plus, Search, Pencil, Trash2, Printer, ImagePlus, X as XIcon } from "lucide-react";
 import { toast } from "sonner";
 
 const hoje = new Date().toISOString().split("T")[0];
@@ -26,7 +26,23 @@ export default function OrdensServico() {
   const [form, setForm] = useState(FORM_VAZIO);
   const [tecnicoId, setTecnicoId] = useState("");
   const [tecnicoHoras, setTecnicoHoras] = useState("");
+  const [fotosUpload, setFotosUpload] = useState<File[]>([]);
+  const [uploadingFotos, setUploadingFotos] = useState(false);
   const pendingPecas = useRef<{ pecaId: string; quantidade: number }[]>([]);
+
+  async function uploadFotos(osId: string): Promise<string[]> {
+    const urls: string[] = [];
+    for (const file of fotosUpload) {
+      const ext = file.name.split(".").pop();
+      const path = `${osId}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const { error } = await supabase.storage.from("os-fotos").upload(path, file);
+      if (!error) {
+        const { data } = supabase.storage.from("os-fotos").getPublicUrl(path);
+        urls.push(data.publicUrl);
+      }
+    }
+    return urls;
+  }
 
   const { data: ordens = [], isLoading } = useQuery({
     queryKey: ["ordens-servico", empresaId],
@@ -92,10 +108,23 @@ export default function OrdensServico() {
           empresa_id: empresaId,
         });
       }
+      if (fotosUpload.length > 0) {
+        setUploadingFotos(true);
+        const urls = await uploadFotos(editingId || os.id);
+        if (urls.length > 0) {
+          const osId = editingId || os.id;
+          const { data: current } = await supabase
+            .from("ordens_servico").select("fotos").eq("id", osId).single();
+          const existing: string[] = current?.fotos || [];
+          await supabase.from("ordens_servico")
+            .update({ fotos: [...existing, ...urls] }).eq("id", osId);
+        }
+        setUploadingFotos(false);
+      }
       qc.invalidateQueries({ queryKey: ["ordens-servico"] });
       toast.success(editingId ? "OS atualizada!" : "OS criada!");
       setOpen(false); setEditingId(null); setForm(FORM_VAZIO);
-      setTecnicoId(""); setTecnicoHoras("");
+      setTecnicoId(""); setTecnicoHoras(""); setFotosUpload([]);
     },
     onError: (e: Error) => toast.error(e.message),
   });
@@ -183,9 +212,17 @@ export default function OrdensServico() {
                   </td>
                   <td className="px-4 py-3">
                     <div className="flex gap-1 items-center">
+                      <button
+                        onClick={() => window.open(`/ordens/${os.id}/pdf`, "_blank")}
+                        title="Gerar PDF"
+                        className="p-1.5 rounded hover:bg-muted"
+                      >
+                        <Printer className="h-4 w-4 text-muted-foreground" />
+                      </button>
                       <button onClick={() => {
                         setEditingId(os.id);
                         setForm({ equipamento_id: os.equipamento_id || "", descricao: os.descricao || "", responsavel_id: os.responsavel_id || "", status: os.status || "Aberta", solucao: os.solucao || "", data_abertura: os.data_abertura || hoje, data_previsao: os.data_previsao || "" });
+                        setFotosUpload([]);
                         setOpen(true);
                       }} className="p-1.5 rounded hover:bg-muted"><Pencil className="h-4 w-4 text-muted-foreground" /></button>
                       <button onClick={() => { if (confirm("Excluir esta OS?")) remove.mutate(os.id); }}
@@ -243,10 +280,34 @@ export default function OrdensServico() {
                 </div>
               )}
             </div>
+            <div>
+              <label className="text-sm font-medium flex items-center gap-2">
+                <ImagePlus className="h-4 w-4" /> Fotos do serviço (opcional)
+              </label>
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                onChange={e => setFotosUpload(Array.from(e.target.files || []))}
+                className="mt-1 w-full text-sm text-muted-foreground file:mr-3 file:rounded file:border-0 file:bg-primary/10 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-primary hover:file:bg-primary/20"
+              />
+              {fotosUpload.length > 0 && (
+                <div className="mt-2 flex flex-wrap gap-2">
+                  {fotosUpload.map((f, i) => (
+                    <div key={i} className="flex items-center gap-1 rounded bg-muted px-2 py-1 text-xs">
+                      {f.name}
+                      <button type="button" onClick={() => setFotosUpload(prev => prev.filter((_, j) => j !== i))}>
+                        <XIcon className="h-3 w-3" />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
             <div className="flex gap-2 justify-end">
               <button onClick={() => setOpen(false)} className="rounded-md border px-4 py-2 text-sm hover:bg-muted">Cancelar</button>
-              <button onClick={() => save.mutate()} disabled={save.isPending} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
-                {save.isPending ? "Salvando..." : editingId ? "Salvar" : "Criar OS"}
+              <button onClick={() => save.mutate()} disabled={save.isPending || uploadingFotos} className="rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90 disabled:opacity-50">
+                {uploadingFotos ? "Enviando fotos..." : save.isPending ? "Salvando..." : editingId ? "Salvar" : "Criar OS"}
               </button>
             </div>
           </div>

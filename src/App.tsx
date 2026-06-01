@@ -26,6 +26,7 @@ import Planos from "@/pages/Planos";
 import LandingPage from "@/pages/LandingPage";
 import Lubrificacao from "@/pages/Lubrificacao";
 import ChecklistTemplates from "@/pages/ChecklistTemplates";
+import OsPdf from "@/pages/OsPdf";
 
 const queryClient = new QueryClient();
 
@@ -40,6 +41,7 @@ export default function App() {
             <Route path="/" element={<LandingPage />} />
             <Route path="/login" element={<Login />} />
             <Route path="/eq/:id" element={<EquipamentoPublico />} />
+            <Route path="/ordens/:id/pdf" element={<OsPdf />} />
 
             {/* Rotas protegidas */}
             <Route element={<ProtectedRoute><AppLayout /></ProtectedRoute>}>
